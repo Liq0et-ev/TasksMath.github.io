@@ -133,6 +133,38 @@
       return { g, sp, open, id: l.id, i };
     });
 
+    // ---------- monētas pa ceļu ----------
+    const COIN_VALUE = o.coinValue || 2;
+    const taken = o.collected || new Set();
+    const coinGeo = track(new T.CylinderGeometry(0.95, 0.95, 0.28, 18));
+    const coinMat = track(new T.MeshLambertMaterial({ color: 0xffc233, emissive: 0x6b4a00 }));
+    const coins = [];
+    for (let i = 0; i < levels.length; i++) {
+      const sA = i === 0 ? 4 : levelS[i - 1] + 5.5, sB = levelS[i] - 5.5; // starp platformām
+      const n = 5;
+      for (let j = 0; j < n; j++) {
+        const id = 'c' + i + '_' + j;
+        if (taken.has(id)) continue;
+        const sc = sA + ((sB - sA) * (j + 0.5)) / n, p = pointAt(sc);
+        const off = Math.sin(j * 1.3 + i) * 3.8; // viļņota līnija — jāpagriežas, lai savāktu
+        const x = p.x + Math.cos(p.ang) * off, z = p.z - Math.sin(p.ang) * off;
+        const g = new T.Group(); g.position.set(x, 2.2, z);
+        const m = new T.Mesh(coinGeo, coinMat); m.rotation.z = Math.PI / 2; m.castShadow = true; g.add(m);
+        scene.add(g); coins.push({ g, id, ph: i + j });
+      }
+    }
+    const fxTex = label('+' + COIN_VALUE + ' 💰', 44, '#ffc233', '#141a24');
+    const fx = [];
+    function beep() {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+        beep.ctx = beep.ctx || new AC(); const a = beep.ctx, os = a.createOscillator(), gn = a.createGain();
+        os.type = 'square'; os.frequency.setValueAtTime(880, a.currentTime); os.frequency.setValueAtTime(1320, a.currentTime + 0.07);
+        gn.gain.setValueAtTime(0.06, a.currentTime); gn.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.18);
+        os.connect(gn); gn.connect(a.destination); os.start(); os.stop(a.currentTime + 0.2);
+      } catch (e) { /* skaņa nav obligāta */ }
+    }
+
     // ---------- barjera pirms pirmā slēgtā līmeņa ----------
     const k = firstLockedIdx();
     if (k > 0) {
@@ -310,8 +342,24 @@
       camera.lookAt(player.position.x, 3, player.position.z);
       sun.position.set(player.position.x + 40, 90, player.position.z + 25); sun.target.position.copy(player.position);
 
+      // monētas: griežas, tiek savāktas
+      const tt = now / 1000;
+      for (let i = coins.length - 1; i >= 0; i--) {
+        const c = coins[i]; c.g.rotation.y = tt * 3 + c.ph; c.g.position.y = 2.3 + Math.sin(tt * 2.5 + c.ph) * 0.35;
+        if (Math.hypot(player.position.x - c.g.position.x, player.position.z - c.g.position.z) < 2.3) {
+          scene.remove(c.g); coins.splice(i, 1); taken.add(c.id);
+          const f = new T.Sprite(new T.SpriteMaterial({ map: fxTex, transparent: true, depthWrite: false }));
+          f.scale.set(3.6, 1.4, 1); f.position.set(c.g.position.x, 4, c.g.position.z); scene.add(f); fx.push({ f, t: 0 });
+          beep(); o.onCollect && o.onCollect(c.id, COIN_VALUE);
+        }
+      }
+      for (let i = fx.length - 1; i >= 0; i--) {
+        const e = fx[i]; e.t += dt; e.f.position.y += dt * 4; e.f.material.opacity = Math.max(0, 1 - e.t / 0.9);
+        if (e.t > 0.9) { scene.remove(e.f); e.f.material.dispose(); fx.splice(i, 1); }
+      }
+
       // platformu animācija un tuvums
-      const t = now / 1000; let nn = null, nd = 4.2;
+      const t = tt; let nn = null, nd = 4.2;
       pads.forEach((p) => {
         p.sp.position.y = 5 + (p.open ? Math.sin(t * 2 + p.i) * 0.35 : 0);
         const dd = Math.hypot(player.position.x - p.g.position.x, player.position.z - p.g.position.z);
@@ -328,6 +376,7 @@
     const api = {
       // testēšanai: simulē laika soli un atdod spēlētāja stāvokli
       _step(ms, n) { for (let i = 0; i < (n || 1); i++) { last = now0; now0 += ms; update(now0); } return { x: player.position.x, z: player.position.z, near }; },
+      _coins() { return coins.length; },
       interact() { if (near && o.onEnter) o.onEnter(near); },
       destroy() {
         if (!running) return; running = false; cancelAnimationFrame(raf);

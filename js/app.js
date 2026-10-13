@@ -20,7 +20,7 @@
   };
 
   // ---------- saglabāšana ----------
-  const blank = () => ({ v: 1, name: '', avatar: START_AVATARS[0], coins: 0, levels: {}, errors: {}, unlockAll: false, view: '3d', lastLevel: 0 });
+  const blank = () => ({ v: 1, name: '', avatar: START_AVATARS[0], coins: 0, levels: {}, errors: {}, unlockAll: false, view: '3d', lastLevel: 0, collected: [] });
   let S = load();
   function load() {
     try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 1) return Object.assign(blank(), s); } catch (e) { /* privātais režīms */ }
@@ -105,7 +105,7 @@
         <div class="hud-mid"><b>${esc(S.name)}</b>
           <div class="bar-wrap"><div class="bar-fill" style="width:${(done / total) * 100}%"></div></div>
           <span class="small" style="color:#fff">${done} / ${total} līmeņi</span></div>
-        <span class="pill">🪙 ${S.coins}</span>
+        <span class="pill" id="coinPill">💰 ${S.coins}</span>
         <button class="btn small ghost" id="to2d" title="2D karte">🗺️</button>
         <button class="btn small ghost" id="teacher" title="Skolotājam">👩‍🏫</button>
       </div>
@@ -117,6 +117,11 @@
     W = World.create(document.getElementById('world'), {
       levels: E.LEVELS, zones: E.ZONES, avatar: S.avatar, name: S.name, startLevel: cur,
       isOpen, isDone, stars: (id) => lv(id).stars || 0,
+      collected: new Set(S.collected),
+      onCollect: (id, v) => {
+        S.collected.push(id); S.coins += v; save();
+        const pill = document.getElementById('coinPill'); if (pill) pill.textContent = '💰 ' + S.coins;
+      },
       onNear: (l) => { enter.hidden = !l; if (l) { enter.textContent = `▶ ${l.id}. līmenis — ${l.short}`; enter.dataset.id = l.id; } },
       onEnter: (id) => { S.lastLevel = id; save(); screenIntro(id); },
       onBlocked: (l) => toast(`🔒 Pabeidz ${l.id - 1}. līmeni, lai atvērtu ceļu tālāk!`),
@@ -151,7 +156,7 @@
         <div class="hello"><b>Sveiks, ${esc(S.name)}!</b>
           <div class="bar-wrap" aria-label="Progress"><div class="bar-fill" style="width:${(done / total) * 100}%"></div></div>
           <div class="small">Pabeigti līmeņi: ${done} / ${total}</div></div>
-        <span class="pill">🪙 ${S.coins}</span>
+        <span class="pill">💰 ${S.coins}</span>
       </div>
       ${done === total ? `<div class="card center"><div class="big-emoji">👑</div><h2>Tu esi daļu čempions!</h2><p>Visi līmeņi pabeigti. Vari tos spēlēt atkārtoti, lai iegūtu 3 zvaigznes.</p></div>` : ''}
       ${zones}
@@ -276,7 +281,7 @@
       st.attempts++; st.correct++; if (G.attempt === 1) st.firstTry++;
       save();
       lockInputs();
-      setFb('good', `✅ ${G.attempt === 1 ? 'Super!' : 'Labi, tagad pareizi!'} +${gain} 🪙`);
+      setFb('good', `✅ ${G.attempt === 1 ? 'Super!' : 'Labi, tagad pareizi!'} +${gain} 💰`);
       endQuestion(G.correct >= G.l.need ? 'Tālāk →' : 'Nākamais uzdevums →');
       return;
     }
@@ -327,7 +332,7 @@
       <div class="big-emoji">${l.boss ? '👑' : '🎉'}</div>
       <h1>${l.boss ? 'Boss uzvarēts!' : 'Līmenis pabeigts!'}</h1>
       <div class="stars-big" style="color:#c98d00">${stars(starsGot)}</div>
-      <p>🪙 +${G.coins} par atbildēm, +${bonus} bonuss</p>
+      <p>💰 +${G.coins} par atbildēm, +${bonus} bonuss</p>
       ${first ? `<p>🎁 Jauns varonis atslēgts: <span style="font-size:36px">${reward}</span></p>` : ''}
       ${next && first ? `<p>🔓 Atslēgts nākamais līmenis: <b>${esc(next.short)}</b></p>` : ''}
       ${nextZone && first ? `<p>🚪 Vārti uz zonu <b>${nextZone.icon} ${esc(nextZone.name)}</b> ir vaļā!</p>` : ''}
