@@ -150,18 +150,40 @@
         const x = p.x + Math.cos(p.ang) * off, z = p.z - Math.sin(p.ang) * off;
         const g = new T.Group(); g.position.set(x, 2.2, z);
         const m = new T.Mesh(coinGeo, coinMat); m.rotation.z = Math.PI / 2; m.castShadow = true; g.add(m);
-        scene.add(g); coins.push({ g, id, ph: i + j });
+        scene.add(g); coins.push({ g, id, ph: i + j, v: COIN_VALUE });
       }
     }
+    // retās zvaigžņu monētas: viena starp katrām divām platformām, ceļa malā
+    const STAR_VALUE = o.starValue || 10;
+    const starShape = new T.Shape();
+    for (let k2 = 0; k2 < 10; k2++) {
+      const r = k2 % 2 ? 0.8 : 1.9, a = (k2 / 10) * Math.PI * 2 + Math.PI / 2;
+      k2 ? starShape.lineTo(Math.cos(a) * r, Math.sin(a) * r) : starShape.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    starShape.closePath();
+    const starGeo = track(new T.ExtrudeGeometry(starShape, { depth: 0.6, bevelEnabled: false })); starGeo.translate(0, 0, -0.3);
+    const starMat = track(new T.MeshLambertMaterial({ color: 0xff9d2e, emissive: 0x8a3b00 }));
+    const markTex = canvasTex(128, 128, (c) => { c.font = '96px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('⭐', 64, 70); });
+    for (let i = 1; i < levels.length; i++) {
+      if (i % 2 === 0) continue; // retāk — tikai katrā otrajā posmā
+      const id = 's' + i; if (taken.has(id)) continue;
+      const p = pointAt((levelS[i - 1] + levelS[i]) / 2), side = i % 4 === 1 ? 1 : -1, off = side * (HALF - 1.2);
+      const x = p.x + Math.cos(p.ang) * off, z = p.z - Math.sin(p.ang) * off;
+      const g = new T.Group(); g.position.set(x, 3, z);
+      const m = new T.Mesh(starGeo, starMat); m.castShadow = true; g.add(m);
+      const mk = sprite(markTex, 2.6, 2.6); mk.position.y = 3.2; g.add(mk); // ziņkārību raisošs marķieris, redzams no tālienes
+      scene.add(g); coins.push({ g, id, ph: i, v: STAR_VALUE, star: true });
+    }
     const fxTex = label('+' + COIN_VALUE + ' 💰', 44, '#ffc233', '#141a24');
+    const fxStar = label('+' + STAR_VALUE + ' ⭐', 44, '#ff9d2e', '#141a24');
     const fx = [];
-    function beep() {
+    function beep(star) {
       try {
         const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
         beep.ctx = beep.ctx || new AC(); const a = beep.ctx, os = a.createOscillator(), gn = a.createGain();
-        os.type = 'square'; os.frequency.setValueAtTime(880, a.currentTime); os.frequency.setValueAtTime(1320, a.currentTime + 0.07);
-        gn.gain.setValueAtTime(0.06, a.currentTime); gn.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.18);
-        os.connect(gn); gn.connect(a.destination); os.start(); os.stop(a.currentTime + 0.2);
+        os.type = 'square'; const f0 = star ? 660 : 880; os.frequency.setValueAtTime(f0, a.currentTime); os.frequency.setValueAtTime(f0 * 1.5, a.currentTime + 0.07); if (star) os.frequency.setValueAtTime(f0 * 2, a.currentTime + 0.14);
+        gn.gain.setValueAtTime(0.06, a.currentTime); gn.gain.exponentialRampToValueAtTime(0.001, a.currentTime + (star ? 0.32 : 0.18));
+        os.connect(gn); gn.connect(a.destination); os.start(); os.stop(a.currentTime + (star ? 0.34 : 0.2));
       } catch (e) { /* skaņa nav obligāta */ }
     }
 
@@ -345,12 +367,12 @@
       // monētas: griežas, tiek savāktas
       const tt = now / 1000;
       for (let i = coins.length - 1; i >= 0; i--) {
-        const c = coins[i]; c.g.rotation.y = tt * 3 + c.ph; c.g.position.y = 2.3 + Math.sin(tt * 2.5 + c.ph) * 0.35;
-        if (Math.hypot(player.position.x - c.g.position.x, player.position.z - c.g.position.z) < 2.3) {
+        const c = coins[i]; c.g.rotation.y = tt * (c.star ? 2 : 3) + c.ph; c.g.position.y = (c.star ? 3.2 : 2.3) + Math.sin(tt * 2.5 + c.ph) * 0.35;
+        if (Math.hypot(player.position.x - c.g.position.x, player.position.z - c.g.position.z) < (c.star ? 2.8 : 2.3)) {
           scene.remove(c.g); coins.splice(i, 1); taken.add(c.id);
-          const f = new T.Sprite(new T.SpriteMaterial({ map: fxTex, transparent: true, depthWrite: false }));
+          const f = new T.Sprite(new T.SpriteMaterial({ map: c.star ? fxStar : fxTex, transparent: true, depthWrite: false }));
           f.scale.set(3.6, 1.4, 1); f.position.set(c.g.position.x, 4, c.g.position.z); scene.add(f); fx.push({ f, t: 0 });
-          beep(); o.onCollect && o.onCollect(c.id, COIN_VALUE);
+          beep(c.star); o.onCollect && o.onCollect(c.id, c.v);
         }
       }
       for (let i = fx.length - 1; i >= 0; i--) {
@@ -377,6 +399,9 @@
       // testēšanai: simulē laika soli un atdod spēlētāja stāvokli
       _step(ms, n) { for (let i = 0; i < (n || 1); i++) { last = now0; now0 += ms; update(now0); } return { x: player.position.x, z: player.position.z, near }; },
       _coins() { return coins.length; },
+      _firstStar() { const c = coins.find((q) => q.star); return c && { x: c.g.position.x, z: c.g.position.z }; },
+      _tp(x, z) { player.position.x = x; player.position.z = z; },
+      _stars() { return coins.filter((c) => c.star).length; },
       interact() { if (near && o.onEnter) o.onEnter(near); },
       destroy() {
         if (!running) return; running = false; cancelAnimationFrame(raf);
