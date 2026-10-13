@@ -157,3 +157,28 @@ th { background: #eef3fa; }
   .node.open, .confetti { animation: none; }
   .confetti { display: none; }
 }
+
+/* ---------- 3D pasaule ---------- */
+body.in-world { overflow: hidden; }
+.world { position: fixed; inset: 0; z-index: 5; background: #8fd3ff; touch-action: none; user-select: none; -webkit-user-select: none; }
+.world-canvas { display: block; width: 100%; height: 100%; }
+.hud { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 8px; align-items: center; padding: 10px 12px; background: linear-gradient(rgba(20,26,36,.7), rgba(20,26,36,0)); color: #fff; z-index: 2; }
+.hud-mid { flex: 1; min-width: 0; text-shadow: 0 2px 0 rgba(0,0,0,.4); }
+.hud-mid .bar-wrap { height: 12px; max-width: 260px; }
+.avatar-btn.sm { width: 48px; height: 48px; font-size: 28px; }
+.hint { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; color: #fff; font-weight: 700; font-size: 14px; text-shadow: 0 2px 0 rgba(0,0,0,.6); pointer-events: none; }
+.enter { position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%); max-width: 92vw; z-index: 3; animation: pulse 1.6s infinite; }
+.enter[hidden] { display: none; }
+.enter:active { transform: translate(-50%, 4px); }
+.joy { position: absolute; left: 22px; bottom: 36px; width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,.35); border: 3px solid rgba(20,26,36,.6); touch-action: none; z-index: 2; }
+.joy .knob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: rgba(20,26,36,.75); border: 3px solid #fff; }
+
+@media (max-width: 520px) {
+  .hud { gap: 6px; padding: 8px; }
+  .hud .small { display: none; }
+  .hud-mid .bar-wrap { min-width: 40px; }
+  .hud .btn.small { padding: 4px 8px; }
+  .hint { font-size: 12px; bottom: 6px; }
+}
+
+.hud .pill { color: var(--ink); }

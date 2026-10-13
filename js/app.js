@@ -20,7 +20,7 @@
   };
 
   // ---------- saglabāšana ----------
-  const blank = () => ({ v: 1, name: '', avatar: START_AVATARS[0], coins: 0, levels: {}, errors: {}, unlockAll: false });
+  const blank = () => ({ v: 1, name: '', avatar: START_AVATARS[0], coins: 0, levels: {}, errors: {}, unlockAll: false, view: '3d', lastLevel: 0 });
   let S = load();
   function load() {
     try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 1) return Object.assign(blank(), s); } catch (e) { /* privātais režīms */ }
@@ -52,7 +52,12 @@
   }
 
   // ---------- ekrāni ----------
-  function render(html) { $app.innerHTML = html; window.scrollTo(0, 0); }
+  let W = null; // aktīvā 3D pasaule
+  function render(html) {
+    if (W) { W.destroy(); W = null; }
+    document.body.classList.remove('in-world');
+    $app.innerHTML = html; window.scrollTo(0, 0);
+  }
 
   function screenWelcome() {
     render(`<div class="card center">
@@ -84,6 +89,47 @@
 
   function screenMap() {
     if (!S.name) return screenWelcome();
+    if (S.view !== '2d' && window.World && World.supported()) {
+      try { return screenWorld(); } catch (err) { console.error(err); if (W) { W.destroy(); W = null; } toast('3D nav pieejams — rādu 2D karti'); }
+    }
+    screenMap2D();
+  }
+
+  function screenWorld() {
+    const done = doneCount(), total = E.LEVELS.length;
+    const cur = S.lastLevel || (E.LEVELS.find((l) => isOpen(l.id) && !isDone(l.id)) || E.LEVELS[0]).id;
+    const touch = matchMedia('(pointer: coarse)').matches;
+    render(`<div class="world" id="world">
+      <div class="hud">
+        <button class="avatar-btn sm" id="avBtn" aria-label="Mainīt varoni">${esc(S.avatar)}</button>
+        <div class="hud-mid"><b>${esc(S.name)}</b>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${(done / total) * 100}%"></div></div>
+          <span class="small" style="color:#fff">${done} / ${total} līmeņi</span></div>
+        <span class="pill">🪙 ${S.coins}</span>
+        <button class="btn small ghost" id="to2d" title="2D karte">🗺️</button>
+        <button class="btn small ghost" id="teacher" title="Skolotājam">👩‍🏫</button>
+      </div>
+      <div class="hint">${touch ? '🕹️ Stienis — iet · velc ekrānu — pagriezt kameru' : 'W A S D — iet · ← → — pagriezt kameru · E — ieiet līmenī'}</div>
+      <button class="btn gold enter" id="enter" hidden></button>
+    </div>`);
+    document.body.classList.add('in-world');
+    const enter = document.getElementById('enter');
+    W = World.create(document.getElementById('world'), {
+      levels: E.LEVELS, zones: E.ZONES, avatar: S.avatar, name: S.name, startLevel: cur,
+      isOpen, isDone, stars: (id) => lv(id).stars || 0,
+      onNear: (l) => { enter.hidden = !l; if (l) { enter.textContent = `▶ ${l.id}. līmenis — ${l.short}`; enter.dataset.id = l.id; } },
+      onEnter: (id) => { S.lastLevel = id; save(); screenIntro(id); },
+      onBlocked: (l) => toast(`🔒 Pabeidz ${l.id - 1}. līmeni, lai atvērtu ceļu tālāk!`),
+    });
+    enter.onclick = () => W && W.interact();
+    window.__world = W; // testēšanai
+    document.getElementById('avBtn').onclick = screenAvatars;
+    document.getElementById('to2d').onclick = () => { S.view = '2d'; save(); screenMap2D(); };
+    document.getElementById('teacher').onclick = screenTeacher;
+  }
+
+  function screenMap2D() {
+    if (!S.name) return screenWelcome();
     const done = doneCount(), total = E.LEVELS.length;
     const zones = E.ZONES.map((z) => {
       const ls = E.LEVELS.filter((l) => l.zone === z.id);
@@ -109,7 +155,10 @@
       </div>
       ${done === total ? `<div class="card center"><div class="big-emoji">👑</div><h2>Tu esi daļu čempions!</h2><p>Visi līmeņi pabeigti. Vari tos spēlēt atkārtoti, lai iegūtu 3 zvaigznes.</p></div>` : ''}
       ${zones}
-      <div class="center" style="margin-top:26px"><button class="btn ghost small" id="teacher">👩‍🏫 Skolotājam</button></div>`);
+      <div class="center" style="margin-top:26px">
+        ${window.World && World.supported() ? '<button class="btn gold small" id="to3d">🧊 3D pasaule</button>' : ''}
+        <button class="btn ghost small" id="teacher">👩‍🏫 Skolotājam</button></div>`);
+    const b3 = document.getElementById('to3d'); if (b3) b3.onclick = () => { S.view = '3d'; save(); screenMap(); };
 
     $app.querySelectorAll('.node').forEach((n) => n.addEventListener('click', () => {
       const id = +n.dataset.id;
@@ -157,6 +206,7 @@
   let G = null; // aktīvā sesija
 
   function startLevel(l) {
+    S.lastLevel = l.id;
     G = { l, correct: 0, hearts: 3, q: null, attempt: 1, coins: 0, firstTry: 0, asked: 0, state: 'answer' };
     lv(l.id).plays = (lv(l.id).plays || 0) + 1; save();
     nextQuestion();
