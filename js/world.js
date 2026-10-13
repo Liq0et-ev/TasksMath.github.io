@@ -177,15 +177,6 @@
     const fxTex = label('+' + COIN_VALUE + ' 💰', 44, '#ffc233', '#141a24');
     const fxStar = label('+' + STAR_VALUE + ' ⭐', 44, '#ff9d2e', '#141a24');
     const fx = [];
-    function beep(star) {
-      try {
-        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-        beep.ctx = beep.ctx || new AC(); const a = beep.ctx, os = a.createOscillator(), gn = a.createGain();
-        os.type = 'square'; const f0 = star ? 660 : 880; os.frequency.setValueAtTime(f0, a.currentTime); os.frequency.setValueAtTime(f0 * 1.5, a.currentTime + 0.07); if (star) os.frequency.setValueAtTime(f0 * 2, a.currentTime + 0.14);
-        gn.gain.setValueAtTime(0.06, a.currentTime); gn.gain.exponentialRampToValueAtTime(0.001, a.currentTime + (star ? 0.32 : 0.18));
-        os.connect(gn); gn.connect(a.destination); os.start(); os.stop(a.currentTime + (star ? 0.34 : 0.2));
-      } catch (e) { /* skaņa nav obligāta */ }
-    }
 
     // ---------- barjera pirms pirmā slēgtā līmeņa ----------
     const k = firstLockedIdx();
@@ -324,7 +315,7 @@
     addEventListener('resize', resize); resize();
 
     // ---------- cikls ----------
-    let near = null, lastBlock = 0, running = true, last = performance.now(), walk = 0, raf = 0;
+    let lastPh = 0, near = null, lastBlock = 0, running = true, last = performance.now(), walk = 0, raf = 0;
     function frame(now) {
       if (!running) return;
       raf = requestAnimationFrame(frame);
@@ -347,11 +338,12 @@
         if (n.d > HALF) { const k3 = HALF / n.d; nx = n.px + (nx - n.px) * k3; nz = n.pz + (nz - n.pz) * k3; n = nearest(nx, nz); }
         if (n.s > limitS()) {
           nx = old.x; nz = old.z;
-          if (now - lastBlock > 2500) { lastBlock = now; o.onBlocked && o.onBlocked(levels[firstLockedIdx()]); }
+          if (now - lastBlock > 2500) { lastBlock = now; window.Sound && Sound.bonk(); o.onBlocked && o.onBlocked(levels[firstLockedIdx()]); }
         }
         player.position.x = nx; player.position.z = nz;
         const target = Math.atan2(vx, vz); let df = target - facing; df = Math.atan2(Math.sin(df), Math.cos(df)); facing += df * Math.min(1, dt * 12);
         player.rotation.y = facing; walk += dt * 11;
+        const ph = Math.floor(walk / Math.PI); if (ph !== lastPh) { lastPh = ph; window.Sound && Sound.step(); }
       } else walk *= 0.8;
       const sw = Math.sin(walk) * (moving ? 0.9 : Math.abs(walk) * 0.1);
       armL.rotation.x = sw; armR.rotation.x = -sw; legL.rotation.x = -sw; legR.rotation.x = sw;
@@ -372,7 +364,7 @@
           scene.remove(c.g); coins.splice(i, 1); taken.add(c.id);
           const f = new T.Sprite(new T.SpriteMaterial({ map: c.star ? fxStar : fxTex, transparent: true, depthWrite: false }));
           f.scale.set(3.6, 1.4, 1); f.position.set(c.g.position.x, 4, c.g.position.z); scene.add(f); fx.push({ f, t: 0 });
-          beep(c.star); o.onCollect && o.onCollect(c.id, c.v);
+          (window.Sound && (c.star ? Sound.star() : Sound.coin())); o.onCollect && o.onCollect(c.id, c.v);
         }
       }
       for (let i = fx.length - 1; i >= 0; i--) {
@@ -388,7 +380,7 @@
         if (p.open && dd < nd) { nd = dd; nn = p; }
       });
       const id = nn ? nn.id : null;
-      if (id !== near) { near = id; o.onNear && o.onNear(id ? levels.find((l) => l.id === id) : null); }
+      if (id !== near) { near = id; if (id && window.Sound) Sound.ping(); o.onNear && o.onNear(id ? levels.find((l) => l.id === id) : null); }
       clouds.forEach((c, i) => { c.position.x += dt * (0.6 + (i % 3) * 0.3); if (c.position.x > 130) c.position.x = -130; });
       renderer.render(scene, camera);
     }

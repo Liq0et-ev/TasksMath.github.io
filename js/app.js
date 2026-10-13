@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   const E = window.Engine;
+  const Snd = window.Sound || new Proxy({}, { get: () => () => {} });
   const $app = document.getElementById('app');
   const KEY = 'daluPiedzivojums.v1';
   const TEACHER_CODE = 'skolotajs'; // tikai aizsardzība pret nejaušu atvēršanu — nav drošības līdzeklis
@@ -60,6 +61,7 @@
   }
 
   function screenWelcome() {
+    Snd.music('world');
     render(`<div class="card center">
       <div class="big-emoji">🍕</div>
       <h1>Daļu piedzīvojums</h1>
@@ -113,6 +115,7 @@
       <button class="btn gold enter" id="enter" hidden></button>
     </div>`);
     document.body.classList.add('in-world');
+    Snd.music('world');
     const enter = document.getElementById('enter');
     W = World.create(document.getElementById('world'), {
       levels: E.LEVELS, zones: E.ZONES, avatar: S.avatar, name: S.name, startLevel: cur,
@@ -123,7 +126,7 @@
         const pill = document.getElementById('coinPill'); if (pill) pill.textContent = '💰 ' + S.coins;
       },
       onNear: (l) => { enter.hidden = !l; if (l) { enter.textContent = `▶ ${l.id}. līmenis — ${l.short}`; enter.dataset.id = l.id; } },
-      onEnter: (id) => { S.lastLevel = id; save(); screenIntro(id); },
+      onEnter: (id) => { S.lastLevel = id; save(); Snd.enter(); screenIntro(id); },
       onBlocked: (l) => toast(`🔒 Pabeidz ${l.id - 1}. līmeni, lai atvērtu ceļu tālāk!`),
     });
     enter.onclick = () => W && W.interact();
@@ -134,6 +137,7 @@
   }
 
   function screenMap2D() {
+    Snd.music('world');
     if (!S.name) return screenWelcome();
     const done = doneCount(), total = E.LEVELS.length;
     const zones = E.ZONES.map((z) => {
@@ -178,6 +182,7 @@
   }
 
   function screenAvatars() {
+    Snd.music('world');
     const have = unlockedAvatars();
     const all = START_AVATARS.concat(REWARDS);
     render(`<div class="card"><h2>Mans varonis</h2>
@@ -195,6 +200,7 @@
   }
 
   function screenIntro(id) {
+    Snd.music('world');
     const l = E.LEVELS.find((x) => x.id === id);
     render(`<div class="card">
         <div class="row spread"><button class="btn ghost small" id="back">← Karte</button><span class="pill">Līmenis ${l.id}</span></div>
@@ -231,6 +237,7 @@
   }
 
   function nextQuestion() {
+    Snd.music('quiz');
     G.q = G.l.gen(); G.attempt = 1; G.state = 'answer'; G.asked++;
     const q = G.q;
     const prompt = q.prompt.replace(/\{\{(\d+)\}\}/g, (_, i) => widget(q.parts[+i], +i));
@@ -281,6 +288,7 @@
       st.attempts++; st.correct++; if (G.attempt === 1) st.firstTry++;
       save();
       lockInputs();
+      Snd.correct(G.attempt === 1);
       setFb('good', `✅ ${G.attempt === 1 ? 'Super!' : 'Labi, tagad pareizi!'} +${gain} 💰`);
       endQuestion(G.correct >= G.l.need ? 'Tālāk →' : 'Nākamais uzdevums →');
       return;
@@ -291,13 +299,13 @@
     tags.forEach((t) => { S.errors[t] = (S.errors[t] || 0) + 1; });
     const msgs = [...new Set(res.results.filter((r) => !r.ok).map((r) => r.msg).filter(Boolean))];
     if (G.attempt === 1) {
-      G.attempt = 2; save();
+      G.attempt = 2; save(); Snd.wrong();
       setFb('bad', `❌ Gandrīz! Pamēģini vēlreiz.<br><span style="font-weight:600">${msgs.map(esc).join('<br>') || 'Pārbaudi aprēķinu un mēģini vēlreiz.'}</span>`);
       const bad = $app.querySelector('.slot.bad input, .slot.bad select'); if (bad) bad.focus();
       return;
     }
     // otrā kļūda — zaudē sirdi, rāda risinājumu
-    st.attempts++; G.hearts--; save();
+    st.attempts++; G.hearts--; save(); Snd.heart();
     lockInputs();
     setFb('bad', `💔 Šoreiz neizdevās. Aplūko risinājumu:${stepsHtml(G.q)}`);
     endQuestion(G.hearts <= 0 ? 'Tālāk →' : 'Nākamais uzdevums →');
@@ -319,6 +327,7 @@
   }
 
   function screenWin() {
+    Snd.music('world'); Snd.win();
     const l = G.l, st = lv(l.id);
     const starsGot = Math.max(1, G.hearts);
     const first = !st.done;
@@ -346,6 +355,7 @@
   }
 
   function screenLose() {
+    Snd.music('world'); Snd.lose();
     const l = G.l;
     render(`<div class="card center">
       <div class="big-emoji">💪</div>
