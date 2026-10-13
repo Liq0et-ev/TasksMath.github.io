@@ -1,0 +1,159 @@
+:root {
+  --ink: #141a24;
+  --bg: #bfe3ff;
+  --card: #ffffff;
+  --blue: #1f6feb; --blue-d: #1553b6;
+  --green: #2ea043; --green-d: #1b7a2f;
+  --red: #e5484d; --red-d: #b3262b;
+  --gold: #ffc233; --gold-d: #c98d00;
+  --grey: #8b96a5; --grey-d: #5d6978;
+  --line: 3px solid var(--ink);
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; color: var(--ink);
+  font-family: "Trebuchet MS", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 18px; line-height: 1.4;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(rgba(255,255,255,.35) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(255,255,255,.35) 2px, transparent 2px);
+  background-size: 48px 48px;
+  min-height: 100vh;
+}
+#app { max-width: 760px; margin: 0 auto; padding: 14px 14px calc(40px + env(safe-area-inset-bottom)); }
+h1, h2, h3 { margin: 0 0 .4em; line-height: 1.15; }
+button, input, select { font: inherit; color: inherit; }
+
+/* ---------- Roblox stila bloki ---------- */
+.card { background: var(--card); border: var(--line); border-radius: var(--radius); box-shadow: 0 6px 0 rgba(20,26,36,.35); padding: 16px; margin: 0 0 18px; }
+.btn {
+  display: inline-block; cursor: pointer; font-weight: 800; letter-spacing: .02em;
+  padding: 12px 22px; border: var(--line); border-radius: 12px;
+  background: var(--blue); color: #fff; box-shadow: 0 5px 0 var(--blue-d);
+  transition: transform .06s, box-shadow .06s; text-shadow: 0 2px 0 rgba(0,0,0,.25);
+}
+.btn:hover { filter: brightness(1.08); }
+.btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--blue-d); }
+.btn.green { background: var(--green); box-shadow: 0 5px 0 var(--green-d); }
+.btn.green:active { box-shadow: 0 1px 0 var(--green-d); }
+.btn.gold { background: var(--gold); color: var(--ink); text-shadow: none; box-shadow: 0 5px 0 var(--gold-d); }
+.btn.gold:active { box-shadow: 0 1px 0 var(--gold-d); }
+.btn.ghost { background: #fff; color: var(--ink); text-shadow: none; box-shadow: 0 5px 0 #aab4c2; }
+.btn.red { background: var(--red); box-shadow: 0 5px 0 var(--red-d); }
+.btn.small { padding: 6px 12px; font-size: 15px; }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+.center { text-align: center; }
+.muted { color: #3c4756; }
+.small { font-size: 15px; color: #3c4756; margin-top: 4px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: var(--line); border-radius: 999px; padding: 3px 12px; font-weight: 800; }
+
+/* ---------- Daļas ---------- */
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 .12em; line-height: 1.15; font-size: .92em; font-weight: 700; }
+.frac .num { border-bottom: .09em solid currentColor; padding: 0 .22em; }
+.frac .den { padding: 0 .22em; }
+.mixed { display: inline-flex; align-items: center; vertical-align: middle; }
+.mixed .whole { margin-right: .08em; font-weight: 700; }
+.eq { font-size: 1.5em; font-weight: 700; margin: 12px 0 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.eq.small-eq { font-size: 1.15em; }
+
+/* ---------- Ievades lauki ---------- */
+.in {
+  width: 3.5em; text-align: center; font-size: 1em; font-weight: 700;
+  border: 3px solid var(--ink); border-radius: 10px; padding: 6px 4px; background: #f6faff;
+  -moz-appearance: textfield;
+}
+.in::-webkit-outer-spin-button, .in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.in:focus, select:focus { outline: 4px solid rgba(31,111,235,.45); }
+.in.wide { width: 4.4em; }
+.fin { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; vertical-align: middle; margin: 0 4px; }
+.fin .bar { width: 100%; height: 4px; background: var(--ink); border-radius: 2px; }
+.fin .in { width: 3.6em; }
+.slot { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; padding: 4px; border-radius: 12px; border: 3px solid transparent; }
+.slot.ok { border-color: var(--green); background: #e7f8ea; }
+.slot.bad { border-color: var(--red); background: #ffecec; }
+select { font-weight: 700; padding: 8px; border: 3px solid var(--ink); border-radius: 10px; background: #f6faff; }
+p { margin: .6em 0; }
+
+/* ---------- Galvene / karte ---------- */
+.top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.avatar-btn { font-size: 34px; width: 60px; height: 60px; border-radius: 12px; border: var(--line); background: #fff; cursor: pointer; box-shadow: 0 4px 0 rgba(20,26,36,.35); }
+.hello { flex: 1; min-width: 140px; }
+.hello b { font-size: 1.15em; }
+.bar-wrap { height: 18px; border: var(--line); border-radius: 10px; background: #fff; overflow: hidden; margin-top: 4px; }
+.bar-fill { height: 100%; background: repeating-linear-gradient(45deg, var(--green) 0 10px, #3fcf5a 10px 20px); transition: width .5s; }
+
+.zone { margin: 22px 0 8px; }
+.zone-head { display: flex; align-items: center; gap: 10px; color: #fff; padding: 8px 14px; border: var(--line); border-radius: 12px; box-shadow: 0 5px 0 rgba(20,26,36,.35); font-weight: 800; font-size: 1.15em; text-shadow: 0 2px 0 rgba(0,0,0,.3); }
+.zone-head .z-icon { font-size: 1.5em; }
+.zone-head small { margin-left: auto; font-size: .75em; opacity: .95; }
+.path { position: relative; padding: 14px 0 0; }
+.node {
+  position: relative; display: flex; align-items: center; gap: 12px; width: 88%;
+  background: #fff; border: var(--line); border-radius: var(--radius); padding: 10px 14px;
+  box-shadow: 0 5px 0 rgba(20,26,36,.35); margin: 0 0 20px; cursor: pointer; text-align: left;
+  transition: transform .1s;
+}
+.node:nth-child(even) { margin-left: auto; }
+.node:not(:last-child)::after { content: ""; position: absolute; left: 36px; top: 100%; height: 20px; border-left: 5px dotted var(--ink); z-index: 0; }
+.node:nth-child(even):not(:last-child)::after { left: auto; right: 36px; }
+.node:hover { transform: translateY(-2px); }
+.node .badge { flex: none; width: 56px; height: 56px; border-radius: 50%; border: var(--line); display: grid; place-items: center; font-size: 28px; background: var(--gold); position: relative; }
+.node .badge i { position: absolute; top: -8px; left: -8px; font-style: normal; font-size: 13px; font-weight: 800; background: var(--ink); color: #fff; border-radius: 10px; padding: 0 6px; }
+.node .t { font-weight: 800; line-height: 1.2; font-size: 17px; }
+.node .stars { letter-spacing: 2px; font-size: 16px; }
+.node.done .badge { background: var(--green); }
+.node.open { animation: pulse 1.6s infinite; }
+.node.locked { background: #dfe5ec; color: #5d6978; cursor: not-allowed; }
+.node.locked .badge { background: #aab4c2; filter: grayscale(1); }
+.node.boss .badge { background: var(--red); }
+.node.shake { animation: shake .4s; }
+@keyframes pulse { 0%,100% { box-shadow: 0 5px 0 rgba(20,26,36,.35), 0 0 0 0 rgba(255,194,51,.9); } 50% { box-shadow: 0 5px 0 rgba(20,26,36,.35), 0 0 0 10px rgba(255,194,51,0); } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+.gate { text-align: center; font-weight: 800; margin: 2px 0 14px; color: #3c4756; }
+
+/* ---------- Spēles ekrāns ---------- */
+.hearts { font-size: 24px; letter-spacing: 2px; }
+.progress { display: flex; gap: 6px; flex: 1; min-width: 120px; }
+.progress span { flex: 1; height: 20px; border: var(--line); border-radius: 6px; background: #fff; }
+.progress span.on { background: var(--green); }
+.feedback { margin-top: 14px; padding: 12px 14px; border: var(--line); border-radius: 12px; font-weight: 700; }
+.feedback.good { background: #e7f8ea; }
+.feedback.bad { background: #fff1f0; }
+.feedback.info { background: #fff8dd; }
+.feedback ol { margin: 6px 0 0; padding-left: 22px; font-weight: 600; }
+.feedback li { margin: 6px 0; }
+.lesson { background: #fff8dd; }
+.lesson ul { margin: 6px 0; padding-left: 22px; }
+.big-emoji { font-size: 64px; line-height: 1; }
+.stars-big { font-size: 44px; letter-spacing: 6px; }
+.avatars { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+.avatars button { font-size: 32px; width: 58px; height: 58px; border: var(--line); border-radius: 12px; background: #fff; cursor: pointer; }
+.avatars button.sel { background: var(--gold); }
+.avatars button[disabled] { opacity: .35; cursor: not-allowed; }
+.name-in { width: 100%; font-size: 1.1em; padding: 10px; border: var(--line); border-radius: 10px; margin: 8px 0; }
+
+/* ---------- Skolotāja panelis ---------- */
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { border: 2px solid var(--ink); padding: 5px 8px; text-align: left; }
+th { background: #eef3fa; }
+.tbl { overflow-x: auto; }
+
+#toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 120px); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 12px; font-weight: 700; transition: transform .25s; z-index: 50; max-width: 90vw; text-align: center; }
+#toast.show { transform: translate(-50%, 0); }
+.confetti { position: fixed; top: -30px; font-size: 28px; pointer-events: none; z-index: 40; animation: fall 2.4s linear forwards; }
+@keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity: .9; } }
+
+@media (max-width: 520px) {
+  body { font-size: 17px; }
+  .node { width: 94%; }
+  .eq { font-size: 1.3em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .node.open, .confetti { animation: none; }
+  .confetti { display: none; }
+}
